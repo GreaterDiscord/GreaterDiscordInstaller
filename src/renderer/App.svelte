@@ -43,8 +43,8 @@
 
         /* Accent colors */
         --accent: #ed4245;
-        --accent-hover: #e22c21
-        --accent-faded: rgba(237, 66, 69, 0.4),
+        --accent-hover: #e22c21;
+        --accent-faded: rgba(237, 66, 69, 0.4);
 
         /* Danger colors */
         --danger: #c13a3a;
