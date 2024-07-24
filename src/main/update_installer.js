@@ -6,14 +6,14 @@ const {version} = require("../../package.json");
 const getJSON = phin.defaults({
     method: "GET",
     parse: "json",
-    headers: {"User-Agent": "BetterDiscord Installer"},
+    headers: {"User-Agent": "GreaterDiscord Installer"},
     followRedirects: true
 });
 
 /* eslint-disable no-console */
 export default async function () {
-    const downloadUrl = "https://api.github.com/repos/BetterDiscord/Installer/releases";
-    console.info(`Better Discord Installer ${version}`);
+    const downloadUrl = "https://api.github.com/repos/foxypiratecove37350/GreaterDiscordInstaller/releases";
+    console.info(`GreaterDiscord Installer ${version}`);
 
     try {
         const response = await getJSON(downloadUrl);
@@ -25,7 +25,7 @@ export default async function () {
 
             const result = await dialog.showMessageBox({
                 title: "New Installer Version Available",
-                message: `A new version of the BetterDiscord installer is available. Click "Download" to download the newest version.`,
+                message: `A new version of the GreaterDiscord installer is available. Click "Download" to download the newest version.`,
                 buttons: ["Download", "Later"],
                 defaultId: 0,
                 cancelId: 1

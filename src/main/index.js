@@ -4,13 +4,13 @@ import URL from "url";
 import updateInstaller from "./update_installer";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
-app.name = "BetterDiscord";
+app.name = "GreaterDiscord";
 
 let mainWindow; // global reference to mainWindow (necessary to prevent window from being garbage collected)
 
 function createMainWindow() {
     const window = new BrowserWindow({
-        title: "BetterDiscord Installer",
+        title: "GreaterDiscord Installer",
         frame: false,
         width: 550,
         height: 350,
@@ -76,5 +76,5 @@ app.on("activate", () => {
 // create main BrowserWindow when electron is ready
 app.on("ready", async () => {
     mainWindow = createMainWindow();
-    if (!process.env.BD_SKIP_UPDATECHECK) updateInstaller();
+    if (!process.env.GD_SKIP_UPDATECHECK) updateInstaller();
 });

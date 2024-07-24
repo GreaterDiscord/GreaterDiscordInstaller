@@ -1,7 +1,7 @@
 import {log} from "./log";
 import {action, status} from "../../stores/installation";
 
-const discordURL = "https://betterdiscord.app/invite";
+const discordURL = "https://discord.gg/Wv8CQRPj7H";
 
 export default function fail() {
     log("");

@@ -9,7 +9,7 @@ import {log, lognewline} from "./utils/log";
 import succeed from "./utils/succeed";
 import fail from "./utils/fail";
 import exists from "./utils/exists";
-import kill from "./utils/kill";
+import killProcesses from "./utils/kill";
 import reset from "./utils/reset";
 import {showKillNotice} from "./utils/notices";
 import doSanityCheck from "./utils/sanity";
@@ -37,12 +37,12 @@ async function deleteShims(paths) {
     }
 }
 
-const bdFolder = path.join(remote.app.getPath("appData"), "BetterDiscord");
-const bdDataFolder = path.join(bdFolder, "data");
+const gdFolder = path.join(remote.app.getPath("appData"), "GreaterDiscord");
+const gdDataFolder = path.join(gdFolder, "data");
 async function disableAllPlugins(channels) {
     const progressPerLoop = (DELETE_PLUGINS_JSON_PROGRESS - progress.value) / channels.length;
     for (const channel of channels) {
-        const channelFolder = path.join(bdDataFolder, channel);
+        const channelFolder = path.join(gdDataFolder, channel);
         const pluginsJson = path.join(channelFolder, "plugins.json");
         try {
             if (originalFs.existsSync(pluginsJson)) {
@@ -66,8 +66,8 @@ async function disableAllPlugins(channels) {
 async function showInstallNotice(config) {
     const confirmation = await remote.dialog.showMessageBox(remote.BrowserWindow.getFocusedWindow(), {
         type: "question",
-        title: "Reinstall BetterDiscord?",
-        message: "After repairing, you need to reinstall BetterDiscord. Would you like to do that now?",
+        title: "Reinstall GreaterDiscord?",
+        message: "After repairing, you need to reinstall GreaterDiscord. Would you like to do that now?",
         noLink: true,
         cancelId: 1,
         buttons: ["Yes", "No"]
@@ -80,7 +80,7 @@ async function showInstallNotice(config) {
     remote.dialog.showMessageBox(remote.BrowserWindow.getFocusedWindow(), {
         type: "info",
         title: "Reinstall Complete",
-        message: "Please relaunch discord manually to finish the repair."
+        message: "Please relaunch Discord manually to finish the repair."
     });
 }
 
@@ -96,7 +96,7 @@ export default async function(config) {
 
 
     lognewline("Killing Discord...");
-    const killErr = await kill(channels, (KILL_DISCORD_PROGRESS - progress.value) / channels.length, false); // await killProcesses(channels);
+    const killErr = await killProcesses(channels, (KILL_DISCORD_PROGRESS - progress.value) / channels.length, false); // await killProcesses(channels);
     if (killErr) {
         showKillNotice();
         return fail();

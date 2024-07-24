@@ -28,7 +28,7 @@
 
     function readLicenseFile() {
         fs.readFile(path.join(__static, "/license.txt"), (err, data) => {
-            if (err) return licenseText = "See license at https://github.com/BetterDiscord/BetterDiscord/blob/master/LICENSE";
+            if (err) return licenseText = "See license at https://github.com/foxypiratecove37350/GreaterDiscord/blob/master/LICENSE";
             licenseText = data;
         });
     }

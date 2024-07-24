@@ -1,5 +1,7 @@
 import {progress, status} from "../stores/installation";
 import {remote, shell} from "electron";
+import * as originalFs from "original-fs";
+import * as fsExtra from "fs-extra";
 import {promises as fs} from "fs";
 import path from "path";
 import phin from "phin";
@@ -9,21 +11,41 @@ import succeed from "./utils/succeed";
 import fail from "./utils/fail";
 import exists from "./utils/exists";
 import reset from "./utils/reset";
-import kill from "./utils/kill";
+import killProcesses from "./utils/kill";
 import {showRestartNotice} from "./utils/notices";
 import doSanityCheck from "./utils/sanity";
 
 const MAKE_DIR_PROGRESS = 30;
-const DOWNLOAD_PACKAGE_PROGRESS = 60;
+const DOWNLOAD_PACKAGE_PROGRESS = 45;
+const COPY_BD_DATA_PROGRESS = 65;
 const INJECT_SHIM_PROGRESS = 90;
 const RESTART_DISCORD_PROGRESS = 100;
 
-const RELEASE_API = "https://api.github.com/repos/BetterDiscord/BetterDiscord/releases";
+const RELEASE_API = "https://api.github.com/repos/foxypiratecove37350/GreaterDiscord/releases";
 
-const bdFolder = path.join(remote.app.getPath("appData"), "BetterDiscord");
-const bdDataFolder = path.join(bdFolder, "data");
-const bdPluginsFolder = path.join(bdFolder, "plugins");
-const bdThemesFolder = path.join(bdFolder, "themes");
+const gdFolder = path.join(remote.app.getPath("appData"), "GreaterDiscord");
+const bdFolder = path.join(remote.app.getPath("appData"), "BetterDiscord"); // Retro-compatibility with BetterDiscord
+const gdDataFolder = path.join(gdFolder, "data");
+const gdPluginsFolder = path.join(gdFolder, "plugins");
+const gdThemesFolder = path.join(gdFolder, "themes");
+
+const PLUGINS_LIST = [
+    {
+        name: "LaTeX Renderer",
+        author: "quantumsoul",
+        id: 1048
+    },
+    {
+        name: "SplitLargeMessages",
+        author: "DevilBro",
+        id: 98
+    },
+    {
+        name: "ReadAllNotificationsButton",
+        author: "DevilBro",
+        id: 94
+    }
+];
 
 
 async function makeDirectories(...folders) {
@@ -47,31 +69,17 @@ async function makeDirectories(...folders) {
     }
 }
 
-const getJSON = phin.defaults({method: "GET", parse: "json", followRedirects: true, headers: {"User-Agent": "BetterDiscord/Installer"}});
-const downloadFile = phin.defaults({method: "GET", followRedirects: true, headers: {"User-Agent": "BetterDiscord/Installer", "Accept": "application/octet-stream"}});
+const getJSON = phin.defaults({method: "GET", parse: "json", followRedirects: true, headers: {"User-Agent": "GreaterDiscord Installer"}});
+const downloadFile = phin.defaults({method: "GET", followRedirects: true, headers: {"User-Agent": "GreaterDiscord Installer", "Accept": "application/octet-stream"}});
 async function downloadAsar() {
-    try {
-        const response = await downloadFile("https://betterdiscord.app/Download/betterdiscord.asar")
-        const bdVersion = response.headers["x-bd-version"];
-        if (200 <= response.statusCode && response.statusCode < 300) {
-            log(`✅ Downloaded BetterDiscord version ${bdVersion} from the official website`);
-            return response.body;
-        }
-        throw new Error(`Status code did not indicate success: ${response.statusCode}`);
-    }
-    catch (error) {
-        log(`❌ Failed to download package from the official website`);
-        log(`❌ ${error.message}`);
-        log(`Falling back to GitHub...`);
-    }
     let assetUrl;
-    let bdVersion;
+    let gdVersion;
     try {
         const response = await getJSON(RELEASE_API);
         const releases = response.body;
-        const asset = releases && releases.length && releases[0].assets && releases[0].assets.find(a => a.name.toLowerCase() === "betterdiscord.asar");
+        const asset = releases && releases.length && releases[0].assets && releases[0].assets.find(a => a.name.toLowerCase() === "greaterdiscord.asar");
         assetUrl = asset && asset.url;
-        bdVersion = asset && releases[0].tag_name;
+        gdVersion = asset && releases[0].tag_name;
         if (!assetUrl) {
             let errMessage = "Could not get the asset url";
             if (!asset) errMessage = "Could not get asset object";
@@ -87,8 +95,8 @@ async function downloadAsar() {
     }
     try {
         const response = await downloadFile(assetUrl);
-        if (200 <= response.statusCode && response.statusCode < 300) {
-            log(`✅ Downloaded BetterDiscord version ${bdVersion} from GitHub`);
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+            log(`✅ Downloaded GreaterDiscord version ${gdVersion} from GitHub`);
             return response.body;
         }
         throw new Error(`Status code did not indicate success: ${response.statusCode}`);
@@ -100,11 +108,10 @@ async function downloadAsar() {
     }
 }
 
-const asarPath = path.join(bdDataFolder, "betterdiscord.asar");
+const asarPath = path.join(gdDataFolder, "greaterdiscord.asar");
 async function installAsar(fileContent) {
     try {
-        const originalFs = require("original-fs").promises; // because electron doesn't like writing asar files
-        await originalFs.writeFile(asarPath, fileContent);
+        await originalFs.promises.writeFile(asarPath, fileContent);
     }
     catch (error) {
         log(`❌ Failed to write package to disk: ${asarPath}`);
@@ -119,6 +126,39 @@ async function downloadAndInstallAsar() {
         await installAsar(fileContent);
     } 
     catch (error) {
+        return error;
+    }
+}
+
+async function copyBdData() {
+    try {
+        fsExtra.copy(bdFolder, gdFolder, {recursive: true});
+        fsExtra.remove(path.join(gdFolder, "data/betterdiscord.asar"));
+        fsExtra.remove(bdFolder, {recursive: true, force: true});
+    }
+    catch (error) {
+        log(`❌ Failed to copy BetterDiscord data`);
+        log(`❌ ${error.message}`);
+        return error;
+    }
+}
+
+async function installDefaultPlugins() {
+    try {
+        for (const plugin of PLUGINS_LIST) {
+            const response = await downloadFile(`https://betterdiscord.app/gh-redirect?id=${plugin.id}`);
+            if (response.statusCode >= 200 && response.statusCode < 300) {
+                await originalFs.promises.writeFile(path.join(gdFolder, `plugins/${plugin.name}.plugin.js`), response.body);
+                log(`✅ Downloaded plugin ${plugin.name}`);
+            }
+            else {
+                throw new Error(`Status code did not indicate success for ${plugin.name} plugin: ${response.statusCode}`);
+            }
+        }
+    }
+    catch (error) {
+        log(`❌ Failed to install defaut plugins`);
+        log(`❌ ${error.message}`);
         return error;
     }
 }
@@ -152,7 +192,7 @@ export default async function(config) {
 
 
     lognewline("Creating required directories...");
-    const makeDirErr = await makeDirectories(bdFolder, bdDataFolder, bdThemesFolder, bdPluginsFolder);
+    const makeDirErr = await makeDirectories(gdFolder, gdDataFolder, gdThemesFolder, gdPluginsFolder);
     if (makeDirErr) return fail();
     log("✅ Directories created");
     progress.set(MAKE_DIR_PROGRESS);
@@ -165,6 +205,44 @@ export default async function(config) {
     progress.set(DOWNLOAD_PACKAGE_PROGRESS);
 
 
+    if (exists(bdFolder)) {
+        const copyBdDataConfirm = await remote.dialog.showMessageBox(remote.BrowserWindow.getFocusedWindow(), {
+            type: "question",
+            title: "Copy BetterDiscord data?",
+            message: "Do you want to move your installed plugins/themes and your settings from BetterDiscord to GreaterDiscord?",
+            noLink: true,
+            cancelId: 1,
+            buttons: ["Yes", "No"]
+        });
+
+        if (copyBdDataConfirm.response === 0) {
+            lognewline("Copying BetterDiscord data");
+            const retrocompatErr = await copyBdData();
+            if (retrocompatErr) return fail();
+            log("✅ Data copied");
+            progress.set(COPY_BD_DATA_PROGRESS);
+        }
+    }
+
+
+    const installDefaultPluginsConfirm = await remote.dialog.showMessageBox(remote.BrowserWindow.getFocusedWindow(), {
+        type: "question",
+        title: "Install default plugins?",
+        message: `Do you want to the default plugins: ${PLUGINS_LIST.map(elem => `\n- ${elem.name} by ${elem.author}`).join("")}`,
+        noLink: true,
+        cancelId: 1,
+        buttons: ["Yes", "No"]
+    });
+
+    if (installDefaultPluginsConfirm.response === 0) {
+        lognewline("Installing default plugins");
+        const defaultPluginsInstallationErr = await installDefaultPlugins();
+        if (defaultPluginsInstallationErr) return fail();
+        log("✅ Plugins installed");
+        progress.set(COPY_BD_DATA_PROGRESS);
+    }
+
+
     lognewline("Injecting shims...");
     const injectErr = await injectShims(paths);
     if (injectErr) return fail();
@@ -173,7 +251,7 @@ export default async function(config) {
 
 
     lognewline("Restarting Discord...");
-    const killErr = await kill(channels, (RESTART_DISCORD_PROGRESS - progress.value) / channels.length);
+    const killErr = await killProcesses(channels, (RESTART_DISCORD_PROGRESS - progress.value) / channels.length);
     if (killErr) showRestartNotice(); // No need to bail out and show failed
     else log("✅ Discord restarted");
     progress.set(RESTART_DISCORD_PROGRESS);

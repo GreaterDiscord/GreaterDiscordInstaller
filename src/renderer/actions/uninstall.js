@@ -10,7 +10,7 @@ import succeed from "./utils/succeed";
 import fail from "./utils/fail";
 import exists from "./utils/exists";
 import reset from "./utils/reset";
-import kill from "./utils/kill";
+import killProcesses from "./utils/kill";
 import {showRestartNotice} from "./utils/notices";
 import doSanityCheck from "./utils/sanity";
 
@@ -56,7 +56,7 @@ export default async function(config) {
 
 
     lognewline("Killing Discord...");
-    const killErr = await kill(channels, (RESTART_DISCORD_PROGRESS - progress.value) / channels.length);
+    const killErr = await killProcesses(channels, (RESTART_DISCORD_PROGRESS - progress.value) / channels.length);
     if (killErr) showRestartNotice(); // No need to bail out
     else log("✅ Discord restarted");
     progress.set(RESTART_DISCORD_PROGRESS);

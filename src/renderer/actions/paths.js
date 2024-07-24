@@ -94,7 +94,7 @@ const validateWindows = function(channel, proposedPath) {
 
 const validateLinuxMac = function(channel, proposedPath) {
     if (proposedPath.includes("/snap/")) {
-        remote.dialog.showErrorBox("BetterDiscord Incompatible", "BetterDiscord is currently incompatible with Snap installs of Discord. Support for snap installs is coming soon!");
+        remote.dialog.showErrorBox("GreaterDiscord Incompatible", "GreaterDiscord is currently incompatible with Snap installs of Discord. Support for snap installs is coming soon!");
         return "";
     }
     const channelName = platforms[channel].toLowerCase().replace(" ", "");

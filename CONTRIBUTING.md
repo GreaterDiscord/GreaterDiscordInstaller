@@ -1,8 +1,8 @@
-# Contributing to BetterDiscord's Installer
+# Contributing to GreaterDiscord's Installer
 
 Thanks for taking the time to contribute!
 
-The following is a set of guidelines for contributing to BetterDiscord's Installer. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. These guidelines have been adapted from [Atom](https://github.com/atom/atom/blob/master/CONTRIBUTING.md).
+The following is a set of guidelines for contributing to GreaterDiscord's Installer. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. These guidelines have been adapted from [Atom](https://github.com/atom/atom/blob/master/CONTRIBUTING.md).
 
 #### Table Of Contents
 
@@ -83,7 +83,7 @@ While the prerequisites above must be satisfied prior to having your pull reques
 
 ### JavaScript Styleguide
 
-All JavaScript must adhere to the [ESLint rules](https://github.com/BetterDiscord/Installer/blob/main/.eslintrc) of the repo.
+All JavaScript must adhere to the [ESLint rules](https://github.com/foxypiratecove37350/GreaterDiscordInstaller/blob/main/.eslintrc) of the repo.
 
 Some other style related points not covered by ESLint:
 
